@@ -22,6 +22,7 @@ pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
                 evaluated.push(lval_eval(e.clone(), cell));
             }
             
+            // check for error lvals
             for cell in &evaluated {
                 if let Lval::Err(_) = cell {
                     return cell.clone();

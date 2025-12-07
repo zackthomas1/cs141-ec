@@ -39,11 +39,12 @@ fn read(pair: pest::iterators::Pair<Rule>) -> Lval {
             Lval::Sexpr(cells)
         },
         Rule::qexpr => {
-            let mut cells = Vec::new();
-            for inner_pair in pair.into_inner() {
-                cells.push(read(inner_pair));
+            let inner_pair = pair.into_inner().next().unwrap();
+            let val = read(inner_pair);
+            match val {
+                Lval::Sexpr(cells) => Lval::Qexpr(cells),
+                _ => Lval::Qexpr(vec![val]),
             }
-            Lval::Qexpr(cells)
         },
         Rule::expr => {
             read(pair.into_inner().next().unwrap())
@@ -74,30 +75,10 @@ fn main() {
 
         // Read line of input
         let readline = rl.readline("lispy> ");
-        match readline {
-            Ok(line) => {
-                rl.add_history_entry(line.as_str());
-                
-                // Prase line of input
-                let parse_result = LispyParser::parse(Rule::lispy, &line);
-                match parse_result {
-                    Ok(mut pairs) => {
-                        let lispy_pair = pairs.next().unwrap(); // lispy rule
-                        for pair in lispy_pair.into_inner() {
-                            if pair.as_rule() == Rule::EOI { continue; }
-                            
-                            // conver parse tree to Lval using read
-                            let lval = read(pair);
-
-                            // evaluate Lval 
-                            let result = lval_eval(env.clone(), lval);
-           
-                            // print line output
-                            println!("{}", result);
-                        }
-                    },
-                    Err(e) => println!("Error: {}", e),
-                }
+        let line = match readline {
+            Ok(l) => {
+                let _ = rl.add_history_entry(l.as_str());
+                l
             },
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
@@ -107,10 +88,42 @@ fn main() {
                 println!("CTRL-D");
                 break;
             },
+            Err(ReadlineError::Io(ref e)) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+                // Fallback for debuggers/environments where rustyline cannot access the console
+                use std::io::{self, Write};
+                print!("lispy> ");
+                let _ = io::stdout().flush();
+                let mut buffer = String::new();
+                match io::stdin().read_line(&mut buffer) {
+                    Ok(_) => buffer.trim().to_string(),
+                    Err(_) => break,
+                }
+            },
             Err(err) => {
                 println!("Error: {:?}", err);
                 break;
             }
+        };
+
+        // Prase line of input
+        let parse_result = LispyParser::parse(Rule::lispy, &line);
+        match parse_result {
+            Ok(mut pairs) => {
+                let lispy_pair = pairs.next().unwrap(); // lispy rule
+                for pair in lispy_pair.into_inner() {
+                    if pair.as_rule() == Rule::EOI { continue; }
+                    
+                    // conver parse tree to Lval using read
+                    let lval = read(pair);
+
+                    // evaluate Lval 
+                    let result = lval_eval(env.clone(), lval);
+    
+                    // print line output
+                    println!("{}", result);
+                }
+            },
+            Err(e) => println!("Error: {}", e),
         }
     }
     rl.save_history("history.txt").unwrap();
