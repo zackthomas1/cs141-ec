@@ -296,7 +296,7 @@ pub fn builtin_eq(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     let mut iter = args.into_iter();
     let a = iter.next().unwrap();
     let b = iter.next().unwrap();
-    if a == b { Lval::Num(1) } else { Lval::Num(0) }
+    if a == b { Lval::T } else { Lval::NIL }
 }
 
 pub fn builtin_equal(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
@@ -308,7 +308,7 @@ pub fn builtin_ne(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     let mut iter = args.into_iter();
     let a = iter.next().unwrap();
     let b = iter.next().unwrap();
-    if a != b { Lval::Num(1) } else { Lval::Num(0) }
+    if a != b { Lval::T } else { Lval::NIL }
 }
 
 pub fn builtin_cond(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
@@ -332,8 +332,8 @@ pub fn builtin_cond(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
         if let Lval::Err(_) = res { return res; }
         
         let is_true = match res {
+            Lval::NIL => false,
             Lval::Num(0) => false,
-            Lval::Num(_) => true,
             _ => true,
         };
         
