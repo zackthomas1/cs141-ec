@@ -129,9 +129,6 @@ fn main() {
 
 // Registers bult-in functions
 fn add_builtins(e: Rc<RefCell<Lenv>>) {
-    e.borrow_mut().put("list".to_string(), Lval::Fun(builtin_list));
-    e.borrow_mut().put("head".to_string(), Lval::Fun(builtin_head));
-    e.borrow_mut().put("tail".to_string(), Lval::Fun(builtin_tail));
     e.borrow_mut().put("eval".to_string(), Lval::Fun(builtin_eval));
     e.borrow_mut().put("join".to_string(), Lval::Fun(builtin_join));
     
