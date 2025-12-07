@@ -1,0 +1,9 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ ";;" ~ (!NEWLINE ~ ANY)* }
+
+number = @{ "-"? ~ ASCII_DIGIT+ }
+symbol = @{ (ASCII_ALPHANUMERIC | "_" | "+" | "-" | "*" | "/" | "\\" | "=" | "<" | ">" | "!" | "&")+ }
+sexpr = { "(" ~ expr* ~ ")" }
+qexpr = { "'" ~ expr }
+expr = { number | symbol | sexpr | qexpr }
+lispy = { SOI ~ expr* ~ EOI }
