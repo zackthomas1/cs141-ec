@@ -214,7 +214,28 @@ pub fn builtin_list(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
 
 pub fn builtin_eval(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     if args.len() != 1 { return Lval::Err("Expected 1 arg".to_string()); }
-    let a = args.into_iter().next().unwrap();
+    let mut a = args.into_iter().next().unwrap();
+
+    // println!("Eval input: {:?}", a);
+    // Recursively unwrap single-element Qexprs to handle nested quoting from car/head
+    while let Lval::Qexpr(ref cells) = a {
+        if cells.len() == 1 {
+            // Check if the single child is a Qexpr OR an Sexpr
+            // If it's an Sexpr, we might want to evaluate it?
+            // But read() converts Sexpr to Qexpr when quoting.
+            
+            // If we have {{+ 1 2}}, we want {+ 1 2}.
+            if let Lval::Qexpr(_) = cells[0] {
+                if let Lval::Qexpr(mut c) = a {
+                    a = c.remove(0);
+                    // println!("Unwrapped to: {:?}", a);
+                    continue;
+                }
+            }
+        }
+        break;
+    }
+
     match a {
         Lval::Qexpr(cells) => {
             let x = Lval::Sexpr(cells);
