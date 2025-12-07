@@ -21,3 +21,7 @@ target
 #.idea/
 
 c-lisp/
+
+.vscode/
+
+history.txt
