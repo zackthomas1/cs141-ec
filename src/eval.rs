@@ -31,6 +31,10 @@ pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
 
             if evaluated.is_empty() { return Lval::Sexpr(evaluated); }
 
+            if evaluated.len() == 1 {
+                return evaluated.remove(0);
+            }
+
             let f = evaluated.remove(0);
             lval_call(e, f, evaluated)
         },
