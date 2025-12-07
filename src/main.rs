@@ -41,10 +41,7 @@ fn read(pair: pest::iterators::Pair<Rule>) -> Lval {
         Rule::qexpr => {
             let inner_pair = pair.into_inner().next().unwrap();
             let val = read(inner_pair);
-            match val {
-                Lval::Sexpr(cells) => Lval::Qexpr(cells),
-                _ => Lval::Qexpr(vec![val]),
-            }
+            Lval::Qexpr(vec![val])
         },
         Rule::expr => {
             read(pair.into_inner().next().unwrap())

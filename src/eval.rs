@@ -167,8 +167,17 @@ pub fn builtin_head(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     match a {
         Lval::Qexpr(mut cells) => {
             if cells.is_empty() { return Lval::Err("Argument is empty".to_string()); }
-            let first = cells.remove(0);
-            Lval::Qexpr(vec![first])
+            
+            if cells.len() != 1 { return Lval::Err("Expected single list in Qexpr".to_string()); }
+
+            match &mut cells[0] {
+                Lval::Sexpr(children) => {
+                    if children.is_empty() { return Lval::Err("List is empty".to_string()); }
+                    let first = children.remove(0);
+                    Lval::Qexpr(vec![first])
+                },
+                _ => Lval::Err("Argument must be a list (Sexpr)".to_string()),
+            }
         },
         _ => Lval::Err("Argument must be Qexpr".to_string()),
     }
@@ -180,7 +189,19 @@ pub fn builtin_tail(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     match a {
         Lval::Qexpr(mut cells) => {
             if cells.is_empty() { return Lval::Err("Argument is empty".to_string()); }
-            cells.remove(0);
+            
+            // The Qexpr should contain exactly one element, which is the list (Sexpr) we want to operate on
+            if cells.len() != 1 { return Lval::Err("Expected single list in Qexpr".to_string()); }
+            
+            match &mut cells[0] {
+                Lval::Sexpr(children) => {
+                    if children.is_empty() { return Lval::Err("List is empty".to_string()); }
+                    children.remove(0);
+                },
+                _ => return Lval::Err("Argument must be a list (Sexpr)".to_string()),
+            }
+            
+            // Return the modified Qexpr (which still contains the modified Sexpr)
             Lval::Qexpr(cells)
         },
         _ => Lval::Err("Argument must be Qexpr".to_string()),
@@ -204,14 +225,21 @@ pub fn builtin_eval(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
 }
 
 pub fn builtin_join(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
-    let mut joined = Vec::new();
+    let mut joined_children = Vec::new();
     for arg in args {
         match arg {
-            Lval::Qexpr(cells) => joined.extend(cells),
+            Lval::Qexpr(cells) => {
+                for cell in cells {
+                    match cell {
+                        Lval::Sexpr(children) => joined_children.extend(children),
+                        _ => joined_children.push(cell),
+                    }
+                }
+            },
             _ => return Lval::Err("Arguments must be Qexpr".to_string()),
         }
     }
-    Lval::Qexpr(joined)
+    Lval::Qexpr(vec![Lval::Sexpr(joined_children)])
 }
 
 pub fn builtin_eq(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
