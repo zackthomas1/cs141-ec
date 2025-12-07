@@ -125,7 +125,19 @@ fn builtin_var(e: Rc<RefCell<Lenv>>, args: Vec<Lval>, func: &str) -> Lval {
     let syms = args_iter.next().unwrap();
     
     let syms_vec = match syms {
-        Lval::Qexpr(v) => v,
+        Lval::Qexpr(mut v) => {
+            if v.len() == 1 {
+                match v.pop().unwrap() {
+                    Lval::Sexpr(inner) => inner,
+                    other => {
+                        v.push(other);
+                        v
+                    }
+                }
+            } else {
+                v
+            }
+        },
         _ => return Lval::Err("First arg must be Qexpr".to_string()),
     };
     
@@ -155,10 +167,26 @@ pub fn builtin_lambda(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     let formals = args_iter.next().unwrap();
     let body = args_iter.next().unwrap();
     
-    if let Lval::Qexpr(_) = formals { } else { return Lval::Err("Formals must be Qexpr".to_string()); }
     if let Lval::Qexpr(_) = body { } else { return Lval::Err("Body must be Qexpr".to_string()); }
     
-    Lval::Lambda(Lenv::new(), Box::new(formals), Box::new(body))
+    let new_formals = match formals {
+        Lval::Qexpr(mut cells) => {
+            if cells.len() == 1 {
+                match cells.pop().unwrap() {
+                    Lval::Sexpr(inner_cells) => Lval::Qexpr(inner_cells),
+                    other => {
+                        cells.push(other);
+                        Lval::Qexpr(cells)
+                    }
+                }
+            } else {
+                Lval::Qexpr(cells)
+            }
+        },
+        _ => return Lval::Err("Formals must be Qexpr".to_string()),
+    };
+    
+    Lval::Lambda(Lenv::new(), Box::new(new_formals), Box::new(body))
 }
 
 pub fn builtin_head(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
