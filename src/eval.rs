@@ -313,10 +313,16 @@ pub fn builtin_ne(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
 
 pub fn builtin_cond(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     for arg in args {
-        let cells = match arg {
+        let mut cells = match arg {
             Lval::Qexpr(c) => c,
             _ => return Lval::Err("Cond branches must be Qexpr".to_string()),
         };
+        
+        if cells.len() == 1 {
+            if let Lval::Sexpr(inner) = &cells[0] {
+                cells = inner.clone();
+            }
+        }
         
         if cells.len() < 2 { return Lval::Err("Cond branch too short".to_string()); }
         
