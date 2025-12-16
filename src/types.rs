@@ -22,6 +22,7 @@ pub enum Lval {
     Qexpr(Vec<Lval>),
     T,
     NIL,
+    Void,
 }
 
 pub type Builtin = fn(Rc<RefCell<Lenv>>, Vec<Lval>) -> Lval;
@@ -104,6 +105,7 @@ impl fmt::Display for Lval {
             },
             Lval::T => write!(f, "T"),
             Lval::NIL => write!(f, "NIL"),
+            Lval::Void => Ok(()),
         }
     }
 }
@@ -126,6 +128,7 @@ impl PartialEq for Lval {
             (Lval::Qexpr(a), Lval::Qexpr(b)) => a == b,
             (Lval::T, Lval::T) => true,
             (Lval::NIL, Lval::NIL) => true,
+            (Lval::Void, Lval::Void) => true,
             // Functions and Lambdas are hard to compare, usually false or pointer equality
             _ => false,
         }

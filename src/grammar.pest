@@ -3,7 +3,8 @@ COMMENT = _{ ";;" ~ (!NEWLINE ~ ANY)* }
 
 number = @{ "-"? ~ ASCII_DIGIT+ }
 symbol = @{ (ASCII_ALPHANUMERIC | "_" | "+" | "-" | "*" | "/" | "\\" | "=" | "<" | ">" | "!" | "&")+ }
+string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
 sexpr = { "(" ~ expr* ~ ")" }
 qexpr = { "'" ~ expr }
-expr = { number | symbol | sexpr | qexpr }
+expr = { number | symbol | string | sexpr | qexpr }
 lispy = { SOI ~ expr* ~ EOI }

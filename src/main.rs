@@ -35,6 +35,10 @@ fn read(pair: pest::iterators::Pair<Rule>) -> Lval {
         Rule::symbol => {
             Lval::Sym(pair.as_str().to_string())
         },
+        Rule::string => {
+            let s = pair.as_str();
+            Lval::Qexpr(vec![Lval::Sym(s[1..s.len()-1].to_string())])
+        },
         Rule::sexpr => {
             let mut cells = Vec::new();
             for inner_pair in pair.into_inner() {
@@ -155,5 +159,8 @@ fn add_builtins(e: Rc<RefCell<Lenv>>) {
     e.borrow_mut().put("eq".to_string(), Lval::Fun(builtin_eq));
     e.borrow_mut().put("equal".to_string(), Lval::Fun(builtin_equal));
     e.borrow_mut().put("neq".to_string(), Lval::Fun(builtin_ne));
+    e.borrow_mut().put("null".to_string(), Lval::Fun(builtin_null));
     e.borrow_mut().put("cond".to_string(), Lval::Fun(builtin_cond));
+    e.borrow_mut().put("quote".to_string(), Lval::Fun(builtin_quote));
+    e.borrow_mut().put("print".to_string(), Lval::Fun(builtin_print));
 }

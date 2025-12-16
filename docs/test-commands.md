@@ -88,3 +88,55 @@
 (quote a)
 (quote (+ 1 2))
 
+**Klefstad's testcases**
+
+**atoms**
+
+t
+nil
+"Hello"
+10
+
+**primitive functions**
+(eq t t)
+(eq nil nil)
+(eq t nil)
+
+(null nil)
+
+(null t)
+
+(quote (a b c))  same as '(a b c)
+(eq 'a 'a)
+(eq '(a b) '(a b)) ; should be nil
+(car '(a b c))
+(cdr '(a b c))
+(cons 'foo '(a b c))
+
+(print '(a b c))
+
+**giving symbols a value an evaluation of symbols**
+
+(setq a '(a b c))
+a
+
+**cond - the conditional expression**
+
+(cond (nil 2 3 4 5 1) (t 1 3 4 2) (t 1 3 4 5 3))
+
+(cond ((eq t nil) 1) ((eq t t) 2)(t 3))
+
+**defining a function and calling that function**
+
+(defun rev (L R) (cond ((null L) R) (t (rev (cdr L) (cons (car L) R)))))
+
+(rev a nil)
+
+(rev (rev  a nil) nil)
+
+**define and call another function in nested combination**
+
+(defun app (L R)(cond ((null L) R)(t (cons (car L) (app (cdr L) R)))))
+
+(app (app a a) (app a a))
+

@@ -8,6 +8,8 @@ use std::cell::RefCell;
 pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
     match v {
         Lval::Sym(s) => {
+            if s == "T" || s == "t" { return Lval::T; }
+            if s == "nil" { return Lval::NIL; }
             if let Some(val) = e.borrow().get(&s) {
                 val
             } else {
@@ -16,6 +18,12 @@ pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
         },
         Lval::Sexpr(mut cells) => {
             if cells.is_empty() { return Lval::Sexpr(cells); }
+
+            if let Lval::Sym(ref s) = cells[0] {
+                if s == "quote" {
+                    return builtin_quote(e, cells);
+                }
+            }
 
             let mut evaluated = Vec::new();
             for cell in cells {
@@ -338,6 +346,15 @@ pub fn builtin_ne(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     if a != b { Lval::T } else { Lval::NIL }
 }
 
+pub fn builtin_null(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
+    if args.len() != 1 { return Lval::Err("Expected 1 arg".to_string()); }
+    let a = args.into_iter().next().unwrap();
+    match a {
+        Lval::NIL => Lval::T,
+        _ => Lval::NIL,
+    }
+}
+
 pub fn builtin_cond(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     for arg in args {
         let mut cells = match arg {
@@ -373,4 +390,17 @@ pub fn builtin_cond(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
         }
     }
     Lval::Sexpr(vec![])
+}
+
+pub fn builtin_quote(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
+    if args.len() != 2 { return Lval::Err("Function 'quote' passed incorrect number of arguments.".to_string()); }
+    return Lval::Qexpr(vec![args[1].clone()])
+}
+
+pub fn builtin_print(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
+    for (i, arg) in args.iter().enumerate() {
+        if i > 0 { print!(" "); }
+        print!("{}", arg);
+    }
+    Lval::Void
 }
