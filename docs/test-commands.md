@@ -106,9 +106,12 @@ nil
 
 (null t)
 
-(quote (a b c))  same as '(a b c)
+;; same as '(a b c)
+(quote (a b c))  
 (eq 'a 'a)
-(eq '(a b) '(a b)) ; should be nil
+
+; should be nil
+(eq '(a b) '(a b)) 
 (car '(a b c))
 (cdr '(a b c))
 (cons 'foo '(a b c))

@@ -23,6 +23,9 @@ pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
                 if s == "quote" {
                     return builtin_quote(e, cells);
                 }
+                if s == "setq" {
+                    return builtin_putq(e, cells);
+                }
             }
 
             let mut evaluated = Vec::new();
@@ -126,6 +129,23 @@ fn builtin_op(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>, op: &str) -> Lval {
 
 pub fn builtin_def(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval { builtin_var(e, args, "def") }
 pub fn builtin_put(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval { builtin_var(e, args, "=") }
+pub fn builtin_putq(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
+    if args.len() != 3 { return Lval::Err("Function 'setq' passed incorrect number of arguments.".to_string()); }
+    
+    let sym = args[1].clone();
+    let val_expr = args[2].clone();
+    
+    if let Lval::Sym(_) = sym {
+        // ok
+    } else {
+        return Lval::Err("First argument to setq must be a symbol".to_string());
+    }
+    
+    let val = lval_eval(e.clone(), val_expr);
+    if let Lval::Err(_) = val { return val; }
+    
+    builtin_var(e, vec![Lval::Qexpr(vec![sym]), val], "=")
+}
 
 fn builtin_var(e: Rc<RefCell<Lenv>>, args: Vec<Lval>, func: &str) -> Lval {
     if args.is_empty() { return Lval::Err("Too few args".to_string()); }
