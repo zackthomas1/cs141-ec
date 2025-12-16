@@ -110,7 +110,7 @@ fn main() {
                 for pair in lispy_pair.into_inner() {
                     if pair.as_rule() == Rule::EOI { continue; }
                     
-                    // conver parse tree to Lval using read
+                    // convert parse tree to Lval using read
                     let lval = read(pair);
 
                     // evaluate Lval 

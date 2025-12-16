@@ -1,12 +1,8 @@
 
 ## Commands
 
-**Compile**
+**To start the interpreter:**
 ```
-rustc main.rs
-```
-
-**Run**
-```
-./main
+cd cs141-EC
+cargo run
 ```
