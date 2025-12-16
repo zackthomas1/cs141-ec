@@ -313,10 +313,6 @@ pub fn builtin_tail(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     }
 }
 
-pub fn builtin_list(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
-    Lval::Qexpr(args)
-}
-
 pub fn builtin_eval(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     if args.len() != 1 { return Lval::Err("Expected 1 arg".to_string()); }
     let mut a = args.into_iter().next().unwrap();
@@ -350,60 +346,31 @@ pub fn builtin_eval(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     }
 }
 
-/// used for cons operation
-pub fn builtin_join(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
-    let mut joined_children = Vec::new();
+
+pub fn builtin_cons(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
+    if args.len() != 2 { return Lval::Err("Expected 2 args".to_string()); }
+    
+    let mut joined = Vec::new();
+    
     for arg in args {
         match arg {
             Lval::Qexpr(cells) => {
                 for cell in cells {
                     match cell {
-                        Lval::Sexpr(children) => joined_children.extend(children),
-                        _ => joined_children.push(cell),
+                        Lval::Sexpr(children) => joined.extend(children),
+                        _ => joined.push(cell),
                     }
                 }
             },
-            _ => return Lval::Err("Arguments must be Qexpr".to_string()),
+            Lval::Sexpr(cells) => {
+                joined.extend(cells);
+            },
+            Lval::NIL => {},
+            _ => joined.push(arg),
         }
     }
-    Lval::Sexpr(joined_children)
-}
-
-pub fn builtin_cons(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
-    if args.len() != 2 { return Lval::Err("Expected 2 args".to_string()); }
-    let mut iter = args.into_iter();
-    let val = iter.next().unwrap();
-    let list = iter.next().unwrap();
     
-    match list {
-        Lval::Qexpr(mut cells) => {
-            // Check if this is a quoted S-expression (e.g. '(1 2 3))
-            // which is represented as Qexpr([Sexpr([1, 2, 3])])
-            let is_wrapped_sexpr = if cells.len() == 1 {
-                matches!(cells[0], Lval::Sexpr(_))
-            } else {
-                false
-            };
-
-            if is_wrapped_sexpr {
-                if let Lval::Sexpr(mut inner) = cells.pop().unwrap() {
-                    inner.insert(0, val);
-                    return Lval::Qexpr(vec![Lval::Sexpr(inner)]);
-                }
-            }
-
-            cells.insert(0, val);
-            Lval::Qexpr(cells)
-        },
-        Lval::Sexpr(mut cells) => {
-            cells.insert(0, val);
-            Lval::Sexpr(cells)
-        },
-        Lval::NIL => {
-            Lval::Sexpr(vec![val])
-        },
-        _ => Lval::Err("Second argument to cons must be a list or NIL".to_string()),
-    }
+    Lval::Sexpr(joined)
 }
 
 pub fn builtin_eq(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {

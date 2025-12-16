@@ -139,7 +139,6 @@ fn main() {
 // by getting exclusive wwrite acces to the environment (lenv)
 fn add_builtins(e: Rc<RefCell<Lenv>>) {
     e.borrow_mut().put("eval".to_string(), Lval::Fun(builtin_eval));
-    e.borrow_mut().put("join".to_string(), Lval::Fun(builtin_join));
     
     e.borrow_mut().put("+".to_string(), Lval::Fun(builtin_add));
     e.borrow_mut().put("-".to_string(), Lval::Fun(builtin_sub));
