@@ -154,7 +154,7 @@ fn add_builtins(e: Rc<RefCell<Lenv>>) {
     
     e.borrow_mut().put("car".to_string(), Lval::Fun(builtin_head));
     e.borrow_mut().put("cdr".to_string(), Lval::Fun(builtin_tail));
-    e.borrow_mut().put("cons".to_string(), Lval::Fun(builtin_join));
+    e.borrow_mut().put("cons".to_string(), Lval::Fun(builtin_cons));
     e.borrow_mut().put("defun".to_string(), Lval::Fun(builtin_lambda));
     e.borrow_mut().put("eq".to_string(), Lval::Fun(builtin_eq));
     e.borrow_mut().put("equal".to_string(), Lval::Fun(builtin_equal));

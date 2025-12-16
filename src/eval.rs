@@ -26,6 +26,12 @@ pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
                 if s == "setq" {
                     return builtin_putq(e, cells);
                 }
+                if s == "defun" {
+                    return builtin_defun(e, cells);
+                }
+                if s == "cond" {
+                    return builtin_cond(e, cells[1..].to_vec());
+                }
             }
 
             let mut evaluated = Vec::new();
@@ -145,6 +151,36 @@ pub fn builtin_putq(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     if let Lval::Err(_) = val { return val; }
     
     builtin_var(e, vec![Lval::Qexpr(vec![sym]), val], "=")
+}
+
+pub fn builtin_defun(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
+    if args.len() != 4 { return Lval::Err("Function 'defun' passed incorrect number of arguments.".to_string()); }
+    
+    let sym = args[1].clone();
+    let formals = args[2].clone();
+    let body = args[3].clone();
+    
+    if let Lval::Sym(_) = sym {
+        // ok
+    } else {
+        return Lval::Err("First argument to defun must be a symbol".to_string());
+    }
+    
+    let formals_q = match formals {
+        Lval::Sexpr(v) => Lval::Qexpr(v),
+        Lval::Qexpr(v) => Lval::Qexpr(v),
+        _ => return Lval::Err("Second argument to defun must be a list".to_string()),
+    };
+
+    let body_q = match body {
+        Lval::Sexpr(v) => Lval::Qexpr(v),
+        Lval::Qexpr(v) => Lval::Qexpr(v),
+        _ => return Lval::Err("Third argument to defun must be a list".to_string()),
+    };
+    
+    let lambda = Lval::Lambda(Lenv::new(), Box::new(formals_q), Box::new(body_q));
+    
+    builtin_var(e, vec![Lval::Qexpr(vec![sym]), lambda], "def")
 }
 
 fn builtin_var(e: Rc<RefCell<Lenv>>, args: Vec<Lval>, func: &str) -> Lval {
@@ -333,6 +369,43 @@ pub fn builtin_join(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     Lval::Sexpr(joined_children)
 }
 
+pub fn builtin_cons(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
+    if args.len() != 2 { return Lval::Err("Expected 2 args".to_string()); }
+    let mut iter = args.into_iter();
+    let val = iter.next().unwrap();
+    let list = iter.next().unwrap();
+    
+    match list {
+        Lval::Qexpr(mut cells) => {
+            // Check if this is a quoted S-expression (e.g. '(1 2 3))
+            // which is represented as Qexpr([Sexpr([1, 2, 3])])
+            let is_wrapped_sexpr = if cells.len() == 1 {
+                matches!(cells[0], Lval::Sexpr(_))
+            } else {
+                false
+            };
+
+            if is_wrapped_sexpr {
+                if let Lval::Sexpr(mut inner) = cells.pop().unwrap() {
+                    inner.insert(0, val);
+                    return Lval::Qexpr(vec![Lval::Sexpr(inner)]);
+                }
+            }
+
+            cells.insert(0, val);
+            Lval::Qexpr(cells)
+        },
+        Lval::Sexpr(mut cells) => {
+            cells.insert(0, val);
+            Lval::Sexpr(cells)
+        },
+        Lval::NIL => {
+            Lval::Sexpr(vec![val])
+        },
+        _ => Lval::Err("Second argument to cons must be a list or NIL".to_string()),
+    }
+}
+
 pub fn builtin_eq(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     if args.len() != 2 { return Lval::Err("Expected 2 args".to_string()); }
     let mut iter = args.into_iter();
@@ -371,6 +444,8 @@ pub fn builtin_null(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     let a = args.into_iter().next().unwrap();
     match a {
         Lval::NIL => Lval::T,
+        Lval::Sexpr(cells) if cells.is_empty() => Lval::T,
+        Lval::Qexpr(cells) if cells.is_empty() => Lval::T,
         _ => Lval::NIL,
     }
 }
@@ -379,7 +454,8 @@ pub fn builtin_cond(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     for arg in args {
         let mut cells = match arg {
             Lval::Qexpr(c) => c,
-            _ => return Lval::Err("Cond branches must be Qexpr".to_string()),
+            Lval::Sexpr(c) => c,
+            _ => return Lval::Err("Cond branches must be Qexpr or Sexpr".to_string()),
         };
         
         if cells.len() == 1 {

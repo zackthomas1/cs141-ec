@@ -131,7 +131,7 @@ a
 
 **defining a function and calling that function**
 
-(defun rev (L R) (cond ((null L) R) (t (rev (cdr L) (cons (car L) R)))))
+(defun rev (L R) (cond ((null L) R)(t (rev (cdr L) (cons (car L) R)))))
 
 (rev a nil)
 
