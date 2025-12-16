@@ -310,11 +310,24 @@ pub fn builtin_eq(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
     let mut iter = args.into_iter();
     let a = iter.next().unwrap();
     let b = iter.next().unwrap();
-    if a == b { Lval::T } else { Lval::NIL }
+    
+    match (a, b) {
+        (Lval::Num(v1), Lval::Num(v2)) => if v1 == v2 { Lval::T } else { Lval::NIL },
+        (Lval::Sym(v1), Lval::Sym(v2)) => if v1 == v2 { Lval::T } else { Lval::NIL },
+        (Lval::T, Lval::T) => Lval::T,
+        (Lval::NIL, Lval::NIL) => Lval::T,
+        // For composite objects (Sexpr, Qexpr) and others, eq checks identity.
+        // Since values are cloned from environment, they are distinct objects.
+        _ => Lval::NIL,
+    }
 }
 
 pub fn builtin_equal(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
-    builtin_eq(e, args)
+    if args.len() != 2 { return Lval::Err("Expected 2 args".to_string()); }
+    let mut iter = args.into_iter();
+    let a = iter.next().unwrap();
+    let b = iter.next().unwrap();
+    if a == b { Lval::T } else { Lval::NIL }
 }
 
 pub fn builtin_ne(_e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
@@ -340,17 +353,20 @@ pub fn builtin_cond(e: Rc<RefCell<Lenv>>, args: Vec<Lval>) -> Lval {
         
         if cells.len() < 2 { return Lval::Err("Cond branch too short".to_string()); }
         
+        // takes first item of the branch and evaluates it
         let cond = cells[0].clone();
         let res = lval_eval(e.clone(), cond);
         
         if let Lval::Err(_) = res { return res; }
         
+        // checks truth of evaluated expression
         let is_true = match res {
             Lval::NIL => false,
             Lval::Num(0) => false,
             _ => true,
         };
         
+        // if the condition is true then execute body
         if is_true {
             let body = cells[1].clone();
             return lval_eval(e.clone(), body);

@@ -64,3 +64,16 @@
 (cond '((eq 1 2) 10) '((eq 1 1) 20))
 (def 'x 10)
 (cond '((eq x 5) 50) '((eq x 10) 100) '((eq x 15) 150))
+
+**EQ vs EQUAL**
+(eq 'A 'A)
+(equal 'A 'A)
+(eq 10 10)
+(equal 10 10)
+(eq '(1 2) '(1 2))
+(equal '(1 2) '(1 2))
+(set 'L1 '(1 2))
+(set 'L2 '(1 2))
+(eq L1 L2)
+(equal L1 L2)
+
