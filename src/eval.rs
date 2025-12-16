@@ -35,6 +35,7 @@ pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
                 return evaluated.remove(0);
             }
 
+            // once the sexpr is evaluate make function call to evaluate the statement
             let f = evaluated.remove(0);
             lval_call(e, f, evaluated)
         },
@@ -44,8 +45,8 @@ pub fn lval_eval(e: Rc<RefCell<Lenv>>, v: Lval) -> Lval {
 
 pub fn lval_call(e: Rc<RefCell<Lenv>>, f: Lval, args: Vec<Lval>) -> Lval {
     match f {
-        Lval::Fun(func) => func(e, args),
-        Lval::Lambda(env, formals, body) => {
+        Lval::Fun(func) => func(e, args),   // evaluate builtin functions
+        Lval::Lambda(env, formals, body) => {       // evaluate custom user defined functions
             let mut f_env = env;
             let given = args.len();
             let total = if let Lval::Qexpr(ref cells) = *formals { cells.len() } else { 0 };

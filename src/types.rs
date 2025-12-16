@@ -6,8 +6,12 @@ use std::fmt;
 use std::rc::Rc;
 
 
-// Represents any value in the Lisp Language
+// defines a standard way to make duplicates of an object (deep copy)
+// tells rust complier to write code to implement the Clone trait
 #[derive(Clone)]
+
+// Represents any value in the Lisp Language
+// in rust each variant of an enum can hold different kinds of data
 pub enum Lval {
     Num(i64),
     Sym(String),
@@ -25,10 +29,13 @@ pub type Builtin = fn(Rc<RefCell<Lenv>>, Vec<Lval>) -> Lval;
 // Represents the scope/environment
 #[derive(Clone)]
 pub struct Lenv {
-    pub par: Option<Rc<RefCell<Lenv>>>,
+    // rust sandwich
+    pub par: Option<Rc<RefCell<Lenv>>>,     // Option states that it might not exist. RC states that it has multiple owners. RefCell states that I can change it, even if its shared. 
     pub data: HashMap<String, Lval>,
 }
 
+// In rust you define the data (struct) and behavior (Impl) separately.
+// impl is a why to inherent implementation
 impl Lenv {
     pub fn new() -> Self {
         Lenv {
@@ -67,6 +74,8 @@ impl Lenv {
     }
 }
 
+/// function for converting an Lval into a user-friendly String.
+/// This is equivalent to overriding toString()
 impl fmt::Display for Lval {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -105,6 +114,8 @@ impl fmt::Debug for Lval {
     }
 }
 
+/// provides functionality for checking if two lval variables are equal
+/// equivalent to overriding .equals()
 impl PartialEq for Lval {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
