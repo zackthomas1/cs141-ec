@@ -77,3 +77,14 @@
 (eq L1 L2)
 (equal L1 L2)
 
+**NULL**
+(null nil)
+(null t)
+(null 10)
+(null 'A)
+
+**QUOTE**
+(quote (1 2 3))
+(quote a)
+(quote (+ 1 2))
+
